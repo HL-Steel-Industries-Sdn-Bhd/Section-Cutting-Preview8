@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
+  <title>Nesting Calculator | Multi-Bar Cutting Optimizer</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: linear-gradient(145deg, #eef2f7 0%, #d4dee9 100%);
+      font-family: system-ui, 'Segoe UI', 'Helvetica Neue', 'Noto Sans', sans-serif;
+      padding: 20px;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .container {
+      max-width: 680px;
+      width: 100%;
+      margin: 0 auto;
+      background: rgba(255, 255, 255, 0.96);
+      border-radius: 40px;
+      box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.3);
+      overflow: hidden;
+      padding: 22px 18px 32px;
+    }
+
+    h1 {
+      font-size: 1.7rem;
+      font-weight: 650;
+      letter-spacing: -0.3px;
+      color: #1e3a4d;
+      margin-bottom: 5px;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .subhead {
+      color: #4d6a82;
+      font-size: 0.78rem;
+      border-left: 3px solid #2c7da0;
+      padding-left: 12px;
+      margin-bottom: 24px;
+      font-weight: 460;
+    }
+
+    .input-panel {
+      background: #f8fafd;
+      border-radius: 32px;
+      padding: 18px 16px;
+      margin-bottom: 28px;
+      box-shadow: inset 0 1px 2px #00000008, 0 3px 6px #ffffffb3;
+    }
+
+    .input-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+
+    .field {
+      flex: 1;
+      min-width: 120px;
+    }
+
+    .field label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #2c6e8f;
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    .field input {
+      width: 100%;
+      padding: 12px 12px;
+      font-size: 0.95rem;
+      border: 1.5px solid #cbdde9;
+      border-radius: 24px;
+      background: white;
+      font-weight: 500;
+      outline: none;
+      transition: 0.2s;
+      color: #0a2a3b;
+    }
+
+    .field input:focus {
+      border-color: #2c7da0;
+      box-shadow: 0 0 0 3px rgba(44,125,160,0.2);
+    }
+
+    .field-hint {
+      font-size: 0.6rem;
+      color: #6f8eaa;
+      margin-top: 5px;
+      padding-left: 8px;
+    }
+
+    button {
+      background: #266d8c;
+      border: none;
+      width: 100%;
+      padding: 14px 0;
+      border-radius: 40px;
+      font-weight: 600;
+      font-size: 1rem;
+      color: white;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+      margin-top: 8px;
+    }
+
+    button:active {
+      transform: scale(0.97);
+      background: #1a546f;
+    }
+
+    /* 表格整体深蓝色粗边框 */
+    .cutting-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0 16px;
+      background: #ffffff;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      border: 3px solid #1f4e6e;
+    }
+
+    .cutting-table th {
+      background: #1f4e6e;
+      color: white;
+      font-weight: 600;
+      font-size: 0.7rem;
+      padding: 8px 6px;           /* 降低表头高度 */
+      text-align: center;
+      letter-spacing: 0.3px;
+      border-right: 1px solid #ffffff55;
+      border-bottom: 2px solid #1f4e6e;
+    }
+
+    .cutting-table th:last-child {
+      border-right: none;
+    }
+
+    .cutting-table td {
+      background: #fff;
+      padding: 6px 6px;           /* 降低单元格高度 */
+      vertical-align: middle;
+      text-align: center;
+      border-bottom: 1px solid #cbdde9;
+      border-right: 1px solid #cbdde9;
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: #1e3a4d;
+    }
+
+    .cutting-table td:last-child {
+      border-right: none;
+    }
+
+    .col-preview { width: 80%; }
+    .col-remaining { width: 10%; }
+    .col-setqty { width: 10%; }
+
+    /* 条形图高度降低，适应手机 */
+    .bar-track {
+      background: #e2e8f0;
+      height: 36px;               /* 从48px降低 */
+      width: 100%;
+      overflow: hidden;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+      border-radius: 0px;
+      margin: 0;
+    }
+
+    .bar-segments {
+      display: flex;
+      height: 100%;
+      width: 100%;
+      border-radius: 0px;
+      overflow: hidden;
+    }
+
+    .segment {
+      height: 100%;
+      background: linear-gradient(135deg, #2c7da0, #1f5e7c);
+      transition: all 0.1s ease;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.2);
+    }
+
+    .segment-remainder {
+      background: repeating-linear-gradient(45deg, #f4a261, #f4a261 8px, #e76f51 8px, #e76f51 16px);
+    }
+
+    .segment:not(:last-child) {
+      border-right: 1px solid rgba(0, 0, 0, 0.2);
+    }
+
+    .empty-bar-message {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      font-size: 0.7rem;
+      color: #6c819a;
+      background: #f1f5f9;
+      width: 100%;
+    }
+
+    /* 总计行：保持紧凑 */
+    .total-row-cell {
+      background: #eef3fc;
+      font-weight: 700;
+      border-top: 3px solid #1f4e6e;
+    }
+
+    .total-row-cell td {
+      background: #eef3fc;
+      border-bottom: none;
+      padding: 8px 6px;          /* 总计行稍高一点点以示区分 */
+    }
+
+    .total-label-box {
+      display: inline-block;
+      background: #1f4e6e;
+      color: white;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 30px;
+      font-size: 0.65rem;
+      letter-spacing: 0.4px;
+      margin-right: 10px;
+      vertical-align: middle;
+    }
+
+    .total-preview-content {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 6px;
+      width: 100%;
+    }
+
+    .total-mm-value {
+      font-weight: 700;
+      color: #0a2a3b;
+      background: #ffffffcc;
+      padding: 3px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      display: inline-block;
+      text-align: center;
+      min-width: 70px;
+      margin: 0 auto;
+      flex: 1;
+      text-align: center;
+    }
+
+    .totals-row {
+      background: #eef3fc;
+      border-radius: 24px;
+      padding: 14px 16px;
+      margin: 18px 0 12px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #1f4e6e;
+    }
+
+    .totals-row span {
+      color: #0c5a7a;
+    }
+
+    .detail-note {
+      background: #eef2f7;
+      border-radius: 20px;
+      padding: 12px 14px;
+      margin-top: 16px;
+      font-size: 0.74rem;
+      text-align: center;
+      color: #2c5a74;
+      border-left: 3px solid #f4a261;
+    }
+
+    @media (max-width: 520px) {
+      .container {
+        padding: 18px 14px 28px;
+      }
+      .bar-track {
+        height: 32px;            /* 手机更紧凑 */
+      }
+      .cutting-table th, .cutting-table td {
+        padding: 5px 4px;
+        font-size: 0.68rem;
+      }
+      .totals-row {
+        font-size: 0.7rem;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>
+    📐 Nesting Calculator
+    <span style="font-size: 0.65rem; background: #eef2f7; padding: 4px 12px; border-radius: 30px;">stock length 6000mm</span>
+  </h1>
+  <div class="subhead">Calculate how many stock bars (6000mm) are needed and see each bar's cutting preview + remaining.</div>
+
+  <div class="input-panel">
+    <div class="input-row">
+      <div class="field">
+        <label>📏 PIECE LENGTH (mm)</label>
+        <input type="number" id="partLength" placeholder="e.g., 850" value="850" step="1" min="1">
+        <div class="field-hint">Length of each required piece</div>
+      </div>
+      <div class="field">
+        <label>🔢 PIECE QTY</label>
+        <input type="number" id="requiredQty" placeholder="e.g., 20" value="20" step="1" min="0">
+        <div class="field-hint">Total number of pieces needed</div>
+      </div>
+    </div>
+    <button id="calculateBtn">
+      🧮 OPTIMIZE & PREVIEW BARS
+    </button>
+  </div>
+
+  <table class="cutting-table">
+    <thead>
+    <tr>
+      <th class="col-preview">✂️ Cutting Preview</th>
+      <th class="col-remaining">Remain</th>
+      <th class="col-setqty">Set Qty</th>
+    </tr>
+    </thead>
+    <tbody id="tableBody">
+    <tr><td colspan="3" style="text-align:center; padding: 24px;">⚙️ Enter values and click optimize</td></tr>
+    </tbody>
+  </table>
+
+  <div class="totals-row" id="totalsPanel">
+    <span>📊 Total required: <span id="totalReqSpan">0</span> pcs</span>
+    <span>🧩 Piece length: <span id="summaryPartLen">850</span> mm</span>
+    <span>📦 Stock bars used: <span id="totalBarsUsed">0</span> bars (6000mm each)</span>
+    <span>🔸 Total remaining (scrap): <span id="totalRemainderSum">0</span> mm</span>
+  </div>
+  <div class="detail-note" id="detailNote">
+    💡 Example: piece 850mm, qty 20 → needs 3 bars of 6000mm. First two bars: 7 pcs + 50mm left, third bar: 6 pcs + 900mm left.<br>
+    ✨ Algorithm fills each bar greedily with as many as possible, then remaining = leftover.
+  </div>
+</div>
+
+<script>
+  (function() {
+    const partLengthInput = document.getElementById('partLength');
+    const requiredQtyInput = document.getElementById('requiredQty');
+    const calculateBtn = document.getElementById('calculateBtn');
+    const tableBody = document.getElementById('tableBody');
+    const totalReqSpan = document.getElementById('totalReqSpan');
+    const summaryPartLen = document.getElementById('summaryPartLen');
+    const totalBarsUsedSpan = document.getElementById('totalBarsUsed');
+    const totalRemainderSumSpan = document.getElementById('totalRemainderSum');
+    const detailNoteDiv = document.getElementById('detailNote');
+
+    const STOCK_LEN = 6000;
+
+    function parsePositiveInt(value, defaultValue = 1) {
+      let num = parseInt(value, 10);
+      if (isNaN(num)) return defaultValue;
+      return Math.max(1, num);
+    }
+
+    function parseNonNegativeInt(value, defaultValue = 0) {
+      let num = parseInt(value, 10);
+      if (isNaN(num)) return defaultValue;
+      return Math.max(0, num);
+    }
+
+    function computeCuttingPlan(partLen, requiredQty) {
+      if (partLen <= 0 || requiredQty <= 0) return [];
+      const maxPerBar = Math.floor(STOCK_LEN / partLen);
+      if (maxPerBar === 0) return [];
+      let remainingPieces = requiredQty;
+      const bars = [];
+      while (remainingPieces > 0) {
+        let piecesThisBar = Math.min(maxPerBar, remainingPieces);
+        let usedLen = piecesThisBar * partLen;
+        let remainder = STOCK_LEN - usedLen;
+        bars.push({
+          fullPieces: piecesThisBar,
+          remainder: remainder
+        });
+        remainingPieces -= piecesThisBar;
+      }
+      return bars;
+    }
+
+    function renderBarPreview(partLen, piecesCount, remainder) {
+      if (!partLen || partLen <= 0) return '<div class="empty-bar-message">⚠️ invalid</div>';
+      if (piecesCount === 0 && remainder <= 0) return '<div class="empty-bar-message">⚡ empty</div>';
+
+      const total = STOCK_LEN;
+      const segments = [];
+
+      for (let i = 0; i < piecesCount; i++) {
+        segments.push({
+          type: 'full',
+          value: partLen,
+          widthPercent: (partLen / total) * 100
+        });
+      }
+      if (remainder > 0) {
+        segments.push({
+          type: 'remainder',
+          value: remainder,
+          widthPercent: (remainder / total) * 100
+        });
+      }
+
+      if (segments.length === 0) {
+        return '<div class="empty-bar-message">no data</div>';
+      }
+
+      const barDiv = document.createElement('div');
+      barDiv.className = 'bar-track';
+      const segmentsDiv = document.createElement('div');
+      segmentsDiv.className = 'bar-segments';
+
+      for (let seg of segments) {
+        const segEl = document.createElement('div');
+        segEl.className = 'segment';
+        if (seg.type === 'remainder') {
+          segEl.classList.add('segment-remainder');
+        }
+        let widthVal = seg.widthPercent;
+        if (widthVal > 100) widthVal = 100;
+        if (widthVal < 0) widthVal = 0;
+        segEl.style.width = `${widthVal}%`;
+        segEl.style.flex = `0 0 ${widthVal}%`;
+        segEl.title = seg.type === 'full' ? `Full piece: ${seg.value}mm` : `Remaining scrap: ${seg.value}mm`;
+        segmentsDiv.appendChild(segEl);
+      }
+      barDiv.appendChild(segmentsDiv);
+      return barDiv.outerHTML;
+    }
+
+    function renderTable(partLen, requiredQty) {
+      if (partLen <= 0 || requiredQty <= 0) {
+        tableBody.innerHTML = `<tr><td colspan="3" style="text-align:center; padding: 24px;">⚠️ Enter valid piece length (>0) and quantity (>0)</td></tr>`;
+        totalBarsUsedSpan.innerText = '0';
+        totalRemainderSumSpan.innerText = '0';
+        totalReqSpan.innerText = requiredQty > 0 ? requiredQty : 0;
+        summaryPartLen.innerText = partLen > 0 ? partLen : '-';
+        detailNoteDiv.innerHTML = `💡 Please enter piece length (mm) and required quantity. Stock bar fixed at 6000mm.`;
+        return;
+      }
+
+      const maxPerBar = Math.floor(STOCK_LEN / partLen);
+      if (maxPerBar === 0) {
+        tableBody.innerHTML = `<tr><td colspan="3" style="text-align:center; padding: 24px;">❌ Piece length (${partLen}mm) exceeds stock length (6000mm). Cannot cut.</td></tr>`;
+        totalBarsUsedSpan.innerText = '0';
+        totalRemainderSumSpan.innerText = '0';
+        totalReqSpan.innerText = requiredQty;
+        summaryPartLen.innerText = partLen;
+        detailNoteDiv.innerHTML = `⚠️ Piece length is longer than stock bar (6000mm). No feasible cut.`;
+        return;
+      }
+
+      const barsPlan = computeCuttingPlan(partLen, requiredQty);
+      if (barsPlan.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="3" style="text-align:center; padding: 24px;">No bars generated. Check parameters.</td></tr>`;
+        totalBarsUsedSpan.innerText = '0';
+        totalRemainderSumSpan.innerText = '0';
+        return;
+      }
+
+      const groupMap = new Map();
+      let totalRemainderAll = 0;
+      for (let bar of barsPlan) {
+        totalRemainderAll += bar.remainder;
+        const key = `${bar.fullPieces}|${bar.remainder}`;
+        if (groupMap.has(key)) {
+          groupMap.get(key).count++;
+        } else {
+          groupMap.set(key, {
+            fullPieces: bar.fullPieces,
+            remainder: bar.remainder,
+            count: 1
+          });
+        }
+      }
+
+      let groupedRows = [];
+      for (let group of groupMap.values()) {
+        groupedRows.push({
+          fullPieces: group.fullPieces,
+          remainder: group.remainder,
+          setQty: group.count
+        });
+      }
+      groupedRows.sort((a,b) => b.fullPieces - a.fullPieces);
+
+      let rowsHtml = '';
+      for (let row of groupedRows) {
+        const previewHtml = renderBarPreview(partLen, row.fullPieces, row.remainder);
+        rowsHtml += `<tr>
+          <td class="col-preview">${previewHtml}</td>
+          <td class="col-remaining"><strong>${row.remainder}</strong> mm</td>
+          <td class="col-setqty"><strong>${row.setQty}</strong></td>
+        </tr>`;
+      }
+
+      const totalBarsCount = barsPlan.length;
+      const totalUsedLength = requiredQty * partLen;
+      const totalRemainingSum = totalRemainderAll;
+      const totalSetQtySum = totalBarsCount;
+
+      const totalPreviewCell = `
+        <div class="total-preview-content">
+          <span class="total-label-box">TOTAL</span>
+          <span class="total-mm-value">${totalUsedLength.toLocaleString()} mm</span>
+        </div>
+      `;
+
+      rowsHtml += `<tr class="total-row-cell">
+        <td class="col-preview">${totalPreviewCell}</td>
+        <td class="col-remaining"><strong>${totalRemainingSum.toLocaleString()}</strong> mm</td>
+        <td class="col-setqty"><strong>${totalSetQtySum}</strong></td>
+      </tr>`;
+
+      tableBody.innerHTML = rowsHtml;
+
+      totalReqSpan.innerText = requiredQty;
+      summaryPartLen.innerText = partLen;
+      totalBarsUsedSpan.innerText = totalBarsCount;
+      totalRemainderSumSpan.innerText = totalRemainingSum;
+
+      const utilization = ((requiredQty * partLen) / (totalBarsCount * STOCK_LEN) * 100).toFixed(1);
+      detailNoteDiv.innerHTML = `📌 ${requiredQty} pcs of ${partLen}mm → requires ${totalBarsCount} stock bar(s) of 6000mm. Total scrap = ${totalRemainingSum}mm (utilization ${utilization}%). Total row shows aggregated values.`;
+    }
+
+    function updateCalculation() {
+      let partLen = parsePositiveInt(partLengthInput.value, 850);
+      let reqQty = parseNonNegativeInt(requiredQtyInput.value, 0);
+
+      if (partLen <= 0) partLen = 1;
+      if (reqQty < 0) reqQty = 0;
+
+      partLengthInput.value = partLen;
+      requiredQtyInput.value = reqQty;
+
+      renderTable(partLen, reqQty);
+    }
+
+    function init() {
+      calculateBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        updateCalculation();
+      });
+
+      const inputs = [partLengthInput, requiredQtyInput];
+      inputs.forEach(inp => {
+        inp.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            updateCalculation();
+          }
+        });
+      });
+
+      partLengthInput.value = 850;
+      requiredQtyInput.value = 20;
+      updateCalculation();
+    }
+
+    init();
+  })();
+</script>
+</body>
+</html>
